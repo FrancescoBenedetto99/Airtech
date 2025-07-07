@@ -9,6 +9,10 @@
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="Prenota tecnici per manutenzione e pulizia condizionatori">
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/2563eb/ffffff?text=AT">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AirTech">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -43,15 +47,41 @@
             min-height: 100vh;
             background: #f9fafb;
         }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 18px;
+            color: #374151;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="loading">
+            <div class="spinner"></div>
+            <div>Caricamento AirTech...</div>
+        </div>
+    </div>
 
     <script type="text/babel">
-        // COPIA QUI TUTTO IL CODICE DALL'ARTIFACT AirTech!
-        // (Il codice React completo che vedi nell'artifact sopra)
-        
         const { useState, useEffect } = React;
         const { 
           Calendar, Clock, Star, MapPin, Phone, CheckCircle, Wrench, Thermometer, 
@@ -62,1462 +92,1010 @@
           Target, Headphones, AlertCircle, CheckSquare, X, Edit3
         } = lucide;
 
-        // [INSERISCI QUI TUTTO IL CODICE DELL'APP...]
-        import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, Clock, Star, MapPin, Phone, CheckCircle, Wrench, Thermometer, 
-  Filter, CreditCard, User, MessageCircle, ArrowLeft, Heart, Bell, 
-  Shield, Award, Zap, Home, Search, Menu, Gift, Camera, Settings,
-  History, Navigation, Users, TrendingUp, FileText, Send, Plus,
-  ChevronRight, Wifi, Battery, Signal, Share2, Download, Map,
-  Target, Headphones, AlertCircle, CheckSquare, X, Edit3
-} from 'lucide-react';
+        const AirTechApp = () => {
+          const [currentScreen, setCurrentScreen] = useState('home');
+          const [selectedService, setSelectedService] = useState(null);
+          const [selectedTechnician, setSelectedTechnician] = useState(null);
+          const [bookingStep, setBookingStep] = useState(1);
+          const [favorites, setFavorites] = useState([1, 3]);
+          const [selectedDate, setSelectedDate] = useState(null);
+          const [selectedTime, setSelectedTime] = useState(null);
+          const [isLoading, setIsLoading] = useState(false);
+          const [showNotification, setShowNotification] = useState(false);
+          const [activeTab, setActiveTab] = useState('home');
+          const [chatMessages, setChatMessages] = useState([]);
+          const [newMessage, setNewMessage] = useState('');
+          const [notifications, setNotifications] = useState([
+            { id: 1, title: 'Servizio completato!', message: 'Marco Rossi ha terminato la pulizia', time: '2h fa', read: false },
+            { id: 2, title: 'Promemoria manutenzione', message: 'E ora di programmare la manutenzione', time: '1g fa', read: true },
+            { id: 3, title: 'Offerta speciale!', message: 'Sconto 20% su tutti i servizi questo weekend', time: '3g fa', read: false }
+          ]);
 
-const AirTechApp = () => {
-  const [currentScreen, setCurrentScreen] = useState('home');
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedTechnician, setSelectedTechnician] = useState(null);
-  const [bookingStep, setBookingStep] = useState(1);
-  const [favorites, setFavorites] = useState([1, 3]);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [activeTab, setActiveTab] = useState('home');
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Servizio completato!', message: 'Marco Rossi ha terminato la pulizia', time: '2h fa', read: false },
-    { id: 2, title: 'Promemoria manutenzione', message: 'E ora di programmare la manutenzione', time: '1g fa', read: true },
-    { id: 3, title: 'Offerta speciale!', message: 'Sconto 20% su tutti i servizi questo weekend', time: '3g fa', read: false }
-  ]);
+          const [userProfile, setUserProfile] = useState({
+            name: 'Francesco Benedetto',
+            email: 'francesco.benedetto@email.com', 
+            phone: '+39 342 123 4567',
+            address: 'Via Roma 123, Milano',
+            avatar: 'FB',
+            memberSince: '2023',
+            totalServices: 12,
+            points: 1240,
+            level: 'Gold'
+          });
 
-  const [userProfile, setUserProfile] = useState({
-    name: 'Alessandro Rossi',
-    email: 'alessandro.rossi@email.com', 
-    phone: '+39 342 123 4567',
-    address: 'Via Roma 123, Milano',
-    avatar: 'AR',
-    memberSince: '2023',
-    totalServices: 12,
-    points: 1240,
-    level: 'Gold'
-  });
+          const services = [
+            {
+              id: 1,
+              name: 'Pulizia Completa',
+              description: 'Pulizia filtri, serpentine, scarico condensa e sanificazione antibatterica completa',
+              price: 89,
+              originalPrice: 120,
+              duration: '60-90 min',
+              icon: React.createElement(Filter, {className: "w-8 h-8"}),
+              badge: 'POPOLARE',
+              benefits: ['Riduce allergeni del 95%', 'Migliora efficienza del 30%', 'Elimina cattivi odori', 'Certificato antibatterico'],
+              savings: '25% rispetto ai consumi attuali',
+              category: 'Pulizia',
+              emergency: false
+            },
+            {
+              id: 2,
+              name: 'Manutenzione Preventiva',
+              description: 'Controllo gas refrigerante, pressioni, componenti elettrici e test performance completo',
+              price: 129,
+              originalPrice: 160,
+              duration: '90-120 min',
+              icon: React.createElement(Wrench, {className: "w-8 h-8"}),
+              badge: 'RACCOMANDATO',
+              benefits: ['Prolunga vita utile +50%', 'Previene guasti costosi', 'Garanzia 12 mesi', 'Certificato di sicurezza'],
+              savings: 'Evita riparazioni da 500+ euro',
+              category: 'Manutenzione',
+              emergency: false
+            },
+            {
+              id: 3,
+              name: 'Riparazione Express',
+              description: 'Diagnosi avanzata, riparazione guasti e sostituzione componenti con ricambi originali',
+              price: 149,
+              originalPrice: null,
+              duration: '120+ min',
+              icon: React.createElement(Thermometer, {className: "w-8 h-8"}),
+              badge: 'URGENTE',
+              benefits: ['Diagnosi gratuita', 'Ricambi originali garantiti', 'Garanzia intervento 2 anni', 'Supporto post-vendita'],
+              savings: 'Intervento in giornata garantito',
+              category: 'Riparazione',
+              emergency: true
+            },
+            {
+              id: 4,
+              name: 'Installazione Smart',
+              description: 'Installazione professionale di nuovo climatizzatore con setup intelligente IoT',
+              price: 299,
+              originalPrice: 380,
+              duration: '3-4 ore',
+              icon: React.createElement(Zap, {className: "w-8 h-8"}),
+              badge: 'NUOVO',
+              benefits: ['Controllo smartphone', 'Efficienza A+++', 'Garanzia 5 anni', 'Setup automazioni'],
+              savings: 'Fino a 40% di risparmio energetico',
+              category: 'Installazione',
+              emergency: false
+            }
+          ];
 
-  const services = [
-    {
-      id: 1,
-      name: 'Pulizia Completa',
-      description: 'Pulizia filtri, serpentine, scarico condensa e sanificazione antibatterica completa',
-      price: 89,
-      originalPrice: 120,
-      duration: '60-90 min',
-      icon: <Filter className="w-8 h-8" />,
-      badge: 'POPOLARE',
-      benefits: ['Riduce allergeni del 95%', 'Migliora efficienza del 30%', 'Elimina cattivi odori', 'Certificato antibatterico'],
-      savings: '25% rispetto ai consumi attuali',
-      category: 'Pulizia',
-      emergency: false
-    },
-    {
-      id: 2,
-      name: 'Manutenzione Preventiva',
-      description: 'Controllo gas refrigerante, pressioni, componenti elettrici e test performance completo',
-      price: 129,
-      originalPrice: 160,
-      duration: '90-120 min',
-      icon: <Wrench className="w-8 h-8" />,
-      badge: 'RACCOMANDATO',
-      benefits: ['Prolunga vita utile +50%', 'Previene guasti costosi', 'Garanzia 12 mesi', 'Certificato di sicurezza'],
-      savings: 'Evita riparazioni da 500+ euro',
-      category: 'Manutenzione',
-      emergency: false
-    },
-    {
-      id: 3,
-      name: 'Riparazione Express',
-      description: 'Diagnosi avanzata, riparazione guasti e sostituzione componenti con ricambi originali',
-      price: 149,
-      originalPrice: null,
-      duration: '120+ min',
-      icon: <Thermometer className="w-8 h-8" />,
-      badge: 'URGENTE',
-      benefits: ['Diagnosi gratuita', 'Ricambi originali garantiti', 'Garanzia intervento 2 anni', 'Supporto post-vendita'],
-      savings: 'Intervento in giornata garantito',
-      category: 'Riparazione',
-      emergency: true
-    },
-    {
-      id: 4,
-      name: 'Installazione Smart',
-      description: 'Installazione professionale di nuovo climatizzatore con setup intelligente IoT',
-      price: 299,
-      originalPrice: 380,
-      duration: '3-4 ore',
-      icon: <Zap className="w-8 h-8" />,
-      badge: 'NUOVO',
-      benefits: ['Controllo smartphone', 'Efficienza A+++', 'Garanzia 5 anni', 'Setup automazioni'],
-      savings: 'Fino a 40% di risparmio energetico',
-      category: 'Installazione',
-      emergency: false
-    }
-  ];
+          const technicians = [
+            {
+              id: 1,
+              name: 'Marco Rossi',
+              rating: 4.9,
+              reviews: 127,
+              specialization: 'Climatizzazione Residenziale',
+              distance: '2.3 km',
+              photo: 'MR',
+              nextAvailable: 'Oggi 14:30',
+              badges: ['TOP RATED', 'ECO EXPERT'],
+              completedJobs: 340,
+              experience: '8 anni',
+              languages: ['Italiano', 'Inglese'],
+              certifications: ['Frigorista Certificato', 'Installatore F-Gas']
+            },
+            {
+              id: 2,
+              name: 'Luigi Bianchi',
+              rating: 4.8,
+              reviews: 89,
+              specialization: 'Sistemi Commerciali',
+              distance: '3.1 km',
+              photo: 'LB',
+              nextAvailable: 'Oggi 16:00',
+              badges: ['VERIFICATO', 'EMERGENCY'],
+              completedJobs: 280,
+              experience: '12 anni',
+              languages: ['Italiano'],
+              certifications: ['Tecnico Specializzato', 'Sicurezza Lavoro']
+            },
+            {
+              id: 3,
+              name: 'Andrea Verdi',
+              rating: 4.9,
+              reviews: 156,
+              specialization: 'Riparazioni & Diagnosi',
+              distance: '1.8 km',
+              photo: 'AV',
+              nextAvailable: 'Domani 09:00',
+              badges: ['SUPER TECH', 'FAST SERVICE'],
+              completedJobs: 420,
+              experience: '10 anni',
+              languages: ['Italiano', 'Inglese', 'Spagnolo'],
+              certifications: ['Master Tecnico', 'Smart Home Expert']
+            }
+          ];
 
-  const technicians = [
-    {
-      id: 1,
-      name: 'Marco Rossi',
-      rating: 4.9,
-      reviews: 127,
-      specialization: 'Climatizzazione Residenziale',
-      distance: '2.3 km',
-      photo: 'MR',
-      nextAvailable: 'Oggi 14:30',
-      badges: ['TOP RATED', 'ECO EXPERT'],
-      completedJobs: 340,
-      experience: '8 anni',
-      languages: ['Italiano', 'Inglese'],
-      certifications: ['Frigorista Certificato', 'Installatore F-Gas'],
-      hourlyRate: 45,
-      responseTime: '< 15 min',
-      workingHours: '08:00 - 20:00',
-      emergencyAvailable: true
-    },
-    {
-      id: 2,
-      name: 'Luigi Bianchi',
-      rating: 4.8,
-      reviews: 89,
-      specialization: 'Sistemi Commerciali',
-      distance: '3.1 km',
-      photo: 'LB',
-      nextAvailable: 'Oggi 16:00',
-      badges: ['VERIFICATO', 'EMERGENCY'],
-      completedJobs: 280,
-      experience: '12 anni',
-      languages: ['Italiano'],
-      certifications: ['Tecnico Specializzato', 'Sicurezza Lavoro'],
-      hourlyRate: 55,
-      responseTime: '< 20 min',
-      workingHours: '07:00 - 22:00',
-      emergencyAvailable: true
-    },
-    {
-      id: 3,
-      name: 'Andrea Verdi',
-      rating: 4.9,
-      reviews: 156,
-      specialization: 'Riparazioni & Diagnosi',
-      distance: '1.8 km',
-      photo: 'AV',
-      nextAvailable: 'Domani 09:00',
-      badges: ['SUPER TECH', 'FAST SERVICE'],
-      completedJobs: 420,
-      experience: '10 anni',
-      languages: ['Italiano', 'Inglese', 'Spagnolo'],
-      certifications: ['Master Tecnico', 'Smart Home Expert'],
-      hourlyRate: 50,
-      responseTime: '< 10 min',
-      workingHours: '06:00 - 23:00',
-      emergencyAvailable: true
-    }
-  ];
+          const bookingHistory = [
+            {
+              id: 1,
+              service: 'Pulizia Completa',
+              technician: 'Marco Rossi',
+              date: '15 Giugno 2025',
+              price: 89,
+              status: 'Completato',
+              rating: 5,
+              review: 'Servizio eccellente, molto professionale!'
+            },
+            {
+              id: 2,
+              service: 'Manutenzione Preventiva', 
+              technician: 'Andrea Verdi',
+              date: '2 Maggio 2025',
+              price: 129,
+              status: 'Completato',
+              rating: 5,
+              review: 'Tecnico competente, lavoro perfetto.'
+            }
+          ];
 
-  const bookingHistory = [
-    {
-      id: 1,
-      service: 'Pulizia Completa',
-      technician: 'Marco Rossi',
-      date: '15 Giugno 2025',
-      price: 89,
-      status: 'Completato',
-      rating: 5,
-      review: 'Servizio eccellente, molto professionale!'
-    },
-    {
-      id: 2,
-      service: 'Manutenzione Preventiva', 
-      technician: 'Andrea Verdi',
-      date: '2 Maggio 2025',
-      price: 129,
-      status: 'Completato',
-      rating: 5,
-      review: 'Tecnico competente, lavoro perfetto.'
-    },
-    {
-      id: 3,
-      service: 'Riparazione Express',
-      technician: 'Luigi Bianchi',
-      date: '18 Aprile 2025', 
-      price: 149,
-      status: 'Completato',
-      rating: 4,
-      review: 'Risolto il problema rapidamente.'
-    }
-  ];
+          const availableDates = [
+            { label: 'Oggi', date: '7 Lug', available: true },
+            { label: 'Domani', date: '8 Lug', available: true },
+            { label: 'Mer', date: '9 Lug', available: true },
+            { label: 'Gio', date: '10 Lug', available: false },
+            { label: 'Ven', date: '11 Lug', available: true }
+          ];
 
-  const emergencyContacts = [
-    { name: 'Pronto Intervento 24/7', phone: '+39 800 123 456', type: 'Emergenza' },
-    { name: 'Assistenza Tecnica', phone: '+39 02 1234 567', type: 'Supporto' },
-    { name: 'Servizio Clienti', phone: '+39 800 987 654', type: 'Info' }
-  ];
+          const availableTimes = [
+            { time: '09:00', available: true, price: 0 },
+            { time: '11:00', available: true, price: 0 },
+            { time: '14:30', available: true, price: 0 },
+            { time: '16:00', available: false, price: 0 },
+            { time: '18:00', available: true, price: 15 },
+            { time: '20:00', available: true, price: 25 }
+          ];
 
-  const availableDates = [
-    { label: 'Oggi', date: '7 Lug', available: true },
-    { label: 'Domani', date: '8 Lug', available: true },
-    { label: 'Mer', date: '9 Lug', available: true },
-    { label: 'Gio', date: '10 Lug', available: false },
-    { label: 'Ven', date: '11 Lug', available: true }
-  ];
+          // Funzioni helper
+          const showSuccess = (message) => {
+            setShowNotification(message);
+            setTimeout(() => setShowNotification(false), 3000);
+          };
 
-  const availableTimes = [
-    { time: '09:00', available: true, price: 0 },
-    { time: '11:00', available: true, price: 0 },
-    { time: '14:30', available: true, price: 0 },
-    { time: '16:00', available: false, price: 0 },
-    { time: '18:00', available: true, price: 15 },
-    { time: '20:00', available: true, price: 25 }
-  ];
+          const simulateLoading = async (duration = 1500) => {
+            setIsLoading(true);
+            await new Promise(resolve => setTimeout(resolve, duration));
+            setIsLoading(false);
+          };
 
-  const userLocation = {
-    lat: 45.4642,
-    lng: 9.1900,
-    address: 'Via Roma 123, Milano'
-  };
+          const toggleFavorite = (technicianId) => {
+            setFavorites(prev => 
+              prev.includes(technicianId) 
+                ? prev.filter(id => id !== technicianId)
+                : [...prev, technicianId]
+            );
+            showSuccess(
+              favorites.includes(technicianId) 
+                ? 'Rimosso dai preferiti' 
+                : 'Aggiunto ai preferiti!'
+            );
+          };
 
-  const toggleFavorite = (technicianId) => {
-    setFavorites(prev => 
-      prev.includes(technicianId) 
-        ? prev.filter(id => id !== technicianId)
-        : [...prev, technicianId]
-    );
-    showSuccess(
-      favorites.includes(technicianId) 
-        ? 'Rimosso dai preferiti' 
-        : 'Aggiunto ai preferiti!'
-    );
-  };
-
-  const showSuccess = (message) => {
-    setShowNotification(message);
-    setTimeout(() => setShowNotification(false), 3000);
-  };
-
-  const simulateLoading = async (duration = 1500) => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, duration));
-    setIsLoading(false);
-  };
-
-  const sendMessage = () => {
-    if (newMessage.trim()) {
-      setChatMessages(prev => [...prev, {
-        id: Date.now(),
-        text: newMessage,
-        sender: 'user',
-        time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-      }]);
-      setNewMessage('');
-      
-      setTimeout(() => {
-        setChatMessages(prev => [...prev, {
-          id: Date.now() + 1,
-          text: 'Grazie per il messaggio! Ti rispondero al piu presto.',
-          sender: 'technician',
-          time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-        }]);
-      }, 1000);
-    }
-  };
-
-  const StatusBar = () => (
-    <div className="flex items-center justify-between text-white text-sm px-6 py-2 bg-black">
-      <div className="flex items-center space-x-2">
-        <span>9:41</span>
-      </div>
-      <div className="flex items-center space-x-1">
-        <Signal className="w-4 h-4" />
-        <Wifi className="w-4 h-4" />
-        <Battery className="w-4 h-4" />
-      </div>
-    </div>
-  );
-
-  const BottomNavigation = () => (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
-      <div className="flex justify-around items-center">
-        {[
-          { id: 'home', icon: Home, label: 'Home' },
-          { id: 'search', icon: Search, label: 'Cerca' },
-          { id: 'history', icon: History, label: 'Storico' },
-          { id: 'chat', icon: MessageCircle, label: 'Chat' },
-          { id: 'profile', icon: User, label: 'Profilo' }
-        ].map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => {
-              setActiveTab(id);
-              setCurrentScreen(id);
-            }}
-            className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all ${
-              activeTab === id 
-                ? 'text-blue-600 bg-blue-50' 
-                : 'text-gray-500'
-            }`}
-          >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs font-medium">{label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const Header = ({ title, showBack = false, onBack, actions = [] }) => (
-    <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-      <div className="relative p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center flex-1">
-            {showBack && (
-              <button 
-                onClick={onBack}
-                className="mr-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            )}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold">{title || 'AirTech'}</h1>
-              {!showBack && <p className="text-blue-100">Il tuo tecnico a domicilio</p>}
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            {actions.map((action, index) => (
-              <button key={index} onClick={action.onClick} className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                <action.icon className="w-5 h-5" />
-              </button>
-            ))}
-            <button 
-              onClick={() => setCurrentScreen('notifications')}
-              className="relative p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-              {notifications.some(n => !n.read) && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-              )}
-            </button>
-            <button 
-              onClick={() => setCurrentScreen('profile')}
-              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-            >
-              <User className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        {!showBack && (
-          <div className="flex items-center text-blue-100">
-            <MapPin className="w-4 h-4 mr-2" />
-            <span className="text-sm">{userLocation.address}</span>
-            <button 
-              onClick={() => setCurrentScreen('location')}
-              className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full hover:bg-white/30 transition-colors"
-            >
-              Cambia
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const EmergencyButton = () => (
-    <button 
-      onClick={() => setCurrentScreen('emergency')}
-      className="fixed bottom-24 right-6 w-16 h-16 bg-red-500 rounded-full shadow-2xl flex items-center justify-center text-white hover:bg-red-600 transition-all duration-300 transform hover:scale-110 z-30"
-    >
-      <AlertCircle className="w-8 h-8" />
-    </button>
-  );
-
-  const ProfileScreen = () => (
-    <div className="space-y-6 pb-20">
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
-            {userProfile.avatar}
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-800">{userProfile.name}</h2>
-            <p className="text-gray-600">{userProfile.email}</p>
-            <div className="flex items-center mt-2">
-              <Award className="w-4 h-4 text-yellow-500 mr-1" />
-              <span className="text-sm font-medium text-gray-700">Membro {userProfile.level}</span>
-            </div>
-          </div>
-          <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-            <Edit3 className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="text-center p-4 bg-blue-50 rounded-2xl">
-            <div className="text-2xl font-bold text-blue-600">{userProfile.totalServices}</div>
-            <div className="text-sm text-gray-600">Servizi</div>
-          </div>
-          <div className="text-center p-4 bg-green-50 rounded-2xl">
-            <div className="text-2xl font-bold text-green-600">{userProfile.points}</div>
-            <div className="text-sm text-gray-600">Punti</div>
-          </div>
-          <div className="text-center p-4 bg-purple-50 rounded-2xl">
-            <div className="text-2xl font-bold text-purple-600">{userProfile.memberSince}</div>
-            <div className="text-sm text-gray-600">Dal</div>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-            <div className="flex items-center">
-              <Phone className="w-5 h-5 text-gray-400 mr-3" />
-              <span>{userProfile.phone}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-            <div className="flex items-center">
-              <MapPin className="w-5 h-5 text-gray-400 mr-3" />
-              <span>{userProfile.address}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">Impostazioni</h3>
-        <div className="space-y-3">
-          {[
-            { icon: Bell, label: 'Notifiche', action: () => setCurrentScreen('notifications') },
-            { icon: CreditCard, label: 'Metodi di Pagamento', action: () => {} },
-            { icon: Shield, label: 'Privacy e Sicurezza', action: () => {} },
-            { icon: Headphones, label: 'Supporto', action: () => setCurrentScreen('support') },
-            { icon: Star, label: 'Valuta App', action: () => {} },
-            { icon: Share2, label: 'Invita Amici', action: () => {} }
-          ].map(({ icon: Icon, label, action }, index) => (
-            <button
-              key={index}
-              onClick={action}
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-colors"
-            >
-              <div className="flex items-center">
-                <Icon className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="font-medium">{label}</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-semibold hover:bg-red-100 transition-colors">
-        Esci dall Account
-      </button>
-    </div>
-  );
-
-  const ChatScreen = () => (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 p-4">
-        <h2 className="text-lg font-semibold">Chat con {selectedTechnician?.name || 'Supporto'}</h2>
-      </div>
-      
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        {chatMessages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Nessun messaggio ancora</p>
-            <p className="text-sm">Inizia una conversazione!</p>
-          </div>
-        ) : (
-          chatMessages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs p-3 rounded-2xl ${
-                  message.sender === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-800 shadow-lg'
-                }`}
-              >
-                <p>{message.text}</p>
-                <p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
-                  {message.time}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Scrivi un messaggio..."
-            className="flex-1 p-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className={`p-3 rounded-full ${
-              newMessage.trim()
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-200 text-gray-400'
-            } transition-colors`}
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const HistoryScreen = () => (
-    <div className="space-y-6 pb-20">
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h2 className="text-xl font-bold mb-4">Storico Servizi</h2>
-        <div className="space-y-4">
-          {bookingHistory.map((booking) => (
-            <div key={booking.id} className="border border-gray-200 rounded-2xl p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{booking.service}</h3>
-                  <p className="text-sm text-gray-600">{booking.technician}</p>
-                  <p className="text-sm text-gray-500">{booking.date}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">€{booking.price}</div>
-                  <div className="text-sm text-green-600 font-medium">{booking.status}</div>
-                </div>
-              </div>
+          const sendMessage = () => {
+            if (newMessage.trim()) {
+              setChatMessages(prev => [...prev, {
+                id: Date.now(),
+                text: newMessage,
+                sender: 'user',
+                time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+              }]);
+              setNewMessage('');
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < booking.rating 
-                          ? 'text-yellow-400 fill-current' 
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm text-gray-600 ml-2">({booking.rating}/5)</span>
-                </div>
-                <button className="bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
-                  Ripeti
-                </button>
-              </div>
-              
-              {booking.review && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-700">"{booking.review}"</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+              setTimeout(() => {
+                setChatMessages(prev => [...prev, {
+                  id: Date.now() + 1,
+                  text: 'Grazie per il messaggio! Ti rispondero al piu presto.',
+                  sender: 'technician',
+                  time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+                }]);
+              }, 1000);
+            }
+          };
 
-  const NotificationsScreen = () => (
-    <div className="space-y-6 pb-20">
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Notifiche</h2>
-          <button 
-            onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
-            className="text-blue-600 text-sm font-medium"
-          >
-            Segna tutte come lette
-          </button>
-        </div>
-        
-        <div className="space-y-3">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-4 rounded-2xl border ${
-                notification.read 
-                  ? 'bg-gray-50 border-gray-200' 
-                  : 'bg-blue-50 border-blue-200'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{notification.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
-                </div>
-                {!notification.read && (
-                  <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                )}
+          // Componenti UI
+          const StatusBar = () => (
+            <div className="flex items-center justify-between text-white text-sm px-6 py-2 bg-black">
+              <div className="flex items-center space-x-2">
+                <span>9:41</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Signal className="w-4 h-4" />
+                <Wifi className="w-4 h-4" />
+                <Battery className="w-4 h-4" />
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+          );
 
-  const EmergencyScreen = () => (
-    <div className="space-y-6 pb-20">
-      <div className="bg-red-50 border border-red-200 rounded-3xl p-6">
-        <div className="text-center mb-6">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-red-800 mb-2">Servizio Emergenza</h2>
-          <p className="text-red-600">Disponibile 24/7 per emergenze urgenti</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">Contatti Rapidi</h3>
-        <div className="space-y-3">
-          {emergencyContacts.map((contact, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-              <div>
-                <h4 className="font-semibold text-gray-800">{contact.name}</h4>
-                <p className="text-sm text-gray-600">{contact.type}</p>
-              </div>
-              <button className="bg-green-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-green-700 transition-colors">
-                <Phone className="w-4 h-4 inline mr-2" />
-                Chiama
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">Problemi Comuni</h3>
-        <div className="space-y-3">
-          {[
-            'Condizionatore non si accende',
-            'Perdita di acqua',
-            'Rumori anomali',
-            'Aria non fredda',
-            'Odori sgradevoli',
-            'Altro problema urgente'
-          ].map((problem, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setSelectedService(services[2]);
-                setCurrentScreen('technicians');
-              }}
-              className="w-full text-left p-4 border border-gray-200 rounded-2xl hover:border-red-300 hover:bg-red-50 transition-colors"
-            >
-              <span className="font-medium">{problem}</span>
-              <ChevronRight className="w-5 h-5 text-gray-400 float-right mt-0.5" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const ServiceCard = ({ service, onSelect }) => (
-    <div 
-      onClick={() => onSelect(service)}
-      className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1 relative overflow-hidden"
-    >
-      {service.badge && (
-        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${
-          service.badge === 'POPOLARE' ? 'bg-green-100 text-green-800' :
-          service.badge === 'RACCOMANDATO' ? 'bg-blue-100 text-blue-800' :
-          service.badge === 'NUOVO' ? 'bg-purple-100 text-purple-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {service.badge}
-        </div>
-      )}
-      
-      <div className="flex items-start justify-between mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-2xl text-blue-600">
-          {service.icon}
-        </div>
-        <div className="text-right">
-          <div className="flex items-center space-x-2">
-            {service.originalPrice && (
-              <span className="text-lg text-gray-400 line-through">€{service.originalPrice}</span>
-            )}
-            <span className="text-3xl font-bold text-gray-800">€{service.price}</span>
-          </div>
-          <div className="text-sm text-gray-500">{service.duration}</div>
-        </div>
-      </div>
-      
-      <h3 className="text-xl font-bold text-gray-800 mb-3">{service.name}</h3>
-      <p className="text-gray-600 text-sm leading-relaxed mb-4">{service.description}</p>
-      
-      <div className="space-y-2 mb-4">
-        {service.benefits.map((benefit, index) => (
-          <div key={index} className="flex items-center text-sm text-gray-600">
-            <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-            <span>{benefit}</span>
-          </div>
-        ))}
-      </div>
-      
-      <div className="bg-green-50 p-3 rounded-xl">
-        <div className="flex items-center text-green-700">
-          <Zap className="w-4 h-4 mr-2" />
-          <span className="text-sm font-medium">{service.savings}</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const TechnicianCard = ({ technician, onSelect }) => (
-    <div 
-      onClick={() => onSelect(technician)}
-      className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center flex-1">
-          <div className="relative">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-              {technician.photo}
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-1">
-              <h3 className="text-lg font-bold text-gray-800">{technician.name}</h3>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(technician.id);
-                }}
-                className="p-1"
-              >
-                <Heart 
-                  className={`w-4 h-4 ${
-                    favorites.includes(technician.id) 
-                      ? 'text-red-500 fill-current' 
-                      : 'text-gray-400'
-                  }`} 
-                />
-              </button>
-            </div>
-            <p className="text-sm text-gray-600 mb-2">{technician.specialization}</p>
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                <span className="text-sm font-semibold">{technician.rating}</span>
-                <span className="text-sm text-gray-500 ml-1">({technician.reviews})</span>
-              </div>
-              <div className="text-sm text-gray-500">
-                {technician.completedJobs} lavori
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1 mb-3">
-              {technician.badges.map((badge, index) => (
-                <span 
-                  key={index}
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    badge.includes('TOP') ? 'bg-yellow-100 text-yellow-800' :
-                    badge.includes('EMERGENCY') ? 'bg-red-100 text-red-800' :
-                    badge.includes('SUPER') ? 'bg-purple-100 text-purple-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div className="flex items-center text-gray-600">
-          <MapPin className="w-4 h-4 mr-1" />
-          {technician.distance}
-        </div>
-        <div className="flex items-center text-gray-600">
-          <Award className="w-4 h-4 mr-1" />
-          {technician.experience}
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between bg-green-50 p-3 rounded-xl">
-        <div className="flex items-center text-green-700">
-          <Clock className="w-4 h-4 mr-2" />
-          <span className="font-medium">{technician.nextAvailable}</span>
-        </div>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700 transition-colors">
-          Prenota
-        </button>
-      </div>
-    </div>
-  );
-
-  const BookingFlow = () => {
-    if (bookingStep === 1) {
-      return (
-        <div className="space-y-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Quando preferisci?</h2>
-            <p className="text-gray-600">Scegli data e orario per il tuo appuntamento</p>
-          </div>
-          
-          <div className="bg-white rounded-3xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-              Date Disponibili
-            </h3>
-            <div className="grid grid-cols-5 gap-3 mb-6">
-              {availableDates.map((day, index) => (
-                <button 
-                  key={index} 
-                  onClick={() => setSelectedDate(day)}
-                  disabled={!day.available}
-                  className={`p-3 rounded-2xl text-center transition-all duration-300 ${
-                    !day.available 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                      : selectedDate?.label === day.label
-                        ? 'bg-blue-600 text-white shadow-lg transform scale-105'
-                        : 'border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  <div className="font-medium text-sm">{day.label}</div>
-                  <div className="text-xs opacity-75">{day.date}</div>
-                </button>
-              ))}
-            </div>
-            
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-blue-600" />
-              Orari Disponibili
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {availableTimes.map((slot, index) => (
-                <button 
-                  key={index} 
-                  onClick={() => setSelectedTime(slot)}
-                  disabled={!slot.available}
-                  className={`p-4 rounded-2xl text-center transition-all duration-300 relative ${
-                    !slot.available 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                      : selectedTime?.time === slot.time
-                        ? 'bg-blue-600 text-white shadow-lg transform scale-105'
-                        : 'border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  <div className="font-semibold">{slot.time}</div>
-                  {slot.price > 0 && slot.available && (
-                    <div className="text-xs opacity-75">+€{slot.price}</div>
-                  )}
-                  {!slot.available && (
-                    <div className="text-xs">Non disponibile</div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button 
-            onClick={async () => {
-              if (selectedDate && selectedTime) {
-                await simulateLoading();
-                setBookingStep(2);
-              }
-            }}
-            disabled={!selectedDate || !selectedTime || isLoading}
-            className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 ${
-              selectedDate && selectedTime && !isLoading
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {isLoading ? 'Elaborazione...' : 'Continua alla Conferma'}
-          </button>
-        </div>
-      );
-    }
-
-    if (bookingStep === 2) {
-      const extraCost = selectedTime?.price || 0;
-      const totalCost = selectedService?.price + extraCost;
-      
-      return (
-        <div className="space-y-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Conferma Prenotazione</h2>
-            <p className="text-gray-600">Controlla tutti i dettagli prima di confermare</p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-              Riepilogo Servizio
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                <span className="text-gray-600">Servizio</span>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedService?.name}</div>
-                  <div className="text-sm text-gray-500">{selectedService?.duration}</div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                <span className="text-gray-600">Tecnico</span>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedTechnician?.name}</div>
-                  <div className="text-sm text-gray-500 flex items-center">
-                    <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                    {selectedTechnician?.rating}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                <span className="text-gray-600">Data e Ora</span>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedDate?.label}, {selectedTime?.time}</div>
-                  <div className="text-sm text-gray-500">{selectedDate?.date} 2025</div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Servizio Base</span>
-                  <span className="font-semibold">€{selectedService?.price}</span>
-                </div>
-                {extraCost > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Supplemento Orario</span>
-                    <span className="font-semibold">€{extraCost}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
-                  <span>Totale</span>
-                  <span className="text-blue-600">€{totalCost}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-              Metodo di Pagamento
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center p-4 border-2 border-blue-500 bg-blue-50 rounded-2xl">
-                <div className="w-4 h-4 bg-blue-600 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <span className="font-medium">Carta di Credito</span>
-                  <div className="text-sm text-gray-600">**** **** **** 1234</div>
-                </div>
-                <Shield className="w-5 h-5 text-green-500" />
-              </div>
-              <div className="flex items-center p-4 border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-gray-300">
-                <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <span>Contanti al Tecnico</span>
-                  <div className="text-sm text-gray-600">Pagamento diretto</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            onClick={async () => {
-              await simulateLoading(2000);
-              showSuccess('Prenotazione confermata con successo!');
-              setCurrentScreen('tracking');
-            }}
-            disabled={isLoading}
-            className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 ${
-              isLoading
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg transform hover:scale-105'
-            }`}
-          >
-            {isLoading ? 'Confermando...' : `Conferma e Paga €${totalCost}`}
-          </button>
-        </div>
-      );
-    }
-  };
-
-  const TrackingScreen = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-          <CheckCircle className="w-10 h-10 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Prenotazione Confermata!</h2>
-        <p className="text-gray-600">Il tuo tecnico e stato notificato ed e in arrivo</p>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <div className="flex items-center mb-6">
-          <div className="relative mr-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              {selectedTechnician?.photo}
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full border-3 border-white flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-800">{selectedTechnician?.name}</h3>
-            <p className="text-gray-600 mb-2">{selectedTechnician?.specialization}</p>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                <span className="text-sm font-semibold">{selectedTechnician?.rating}</span>
-              </div>
-              <div className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                IN VIAGGIO
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col space-y-2">
-            <button className="bg-blue-600 p-3 rounded-full hover:bg-blue-700 transition-colors shadow-lg">
-              <Phone className="w-5 h-5 text-white" />
-            </button>
-            <button 
-              onClick={() => setCurrentScreen('chat')}
-              className="bg-green-600 p-3 rounded-full hover:bg-green-700 transition-colors shadow-lg"
-            >
-              <MessageCircle className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-green-50 p-5 rounded-2xl mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-700">Stato del Servizio</span>
-            <span className="text-sm text-blue-600 font-semibold">Arriva in 12 minuti</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
-            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 h-3 rounded-full w-1/3 transition-all duration-1000"></div>
-          </div>
-          <div className="flex justify-between text-xs text-gray-600">
-            <span className="font-medium text-blue-600">✓ Confermato</span>
-            <span className="font-medium text-purple-600">→ In Viaggio</span>
-            <span className="text-gray-400">In Corso</span>
-            <span className="text-gray-400">Completato</span>
-          </div>
-        </div>
-
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-2xl">
-          <div className="flex items-center text-yellow-800">
-            <Bell className="w-5 h-5 mr-2" />
-            <span className="font-medium">Il tecnico ti inviera un messaggio quando arriva</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-6 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-          Dettagli Appuntamento
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-            <div className="flex items-center">
-              <Wrench className="w-5 h-5 text-gray-400 mr-3" />
-              <span className="font-medium">{selectedService?.name}</span>
-            </div>
-            <span className="text-blue-600 font-semibold">€{selectedService?.price}</span>
-          </div>
-          <div className="flex items-center p-3 bg-gray-50 rounded-xl">
-            <Clock className="w-5 h-5 text-gray-400 mr-3" />
-            <span>{selectedDate?.label}, {selectedTime?.time} - {selectedService?.duration}</span>
-          </div>
-          <div className="flex items-center p-3 bg-gray-50 rounded-xl">
-            <MapPin className="w-5 h-5 text-gray-400 mr-3" />
-            <span>Via Roma 123, Milano</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <button className="bg-white border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold hover:bg-gray-50 transition-colors shadow-lg">
-          Modifica Orario
-        </button>
-        <button className="bg-red-50 border border-red-200 text-red-600 py-3 rounded-2xl font-semibold hover:bg-red-100 transition-colors">
-          Annulla
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'services':
-        return (
-          <div className="space-y-6 pb-20">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Scegli il Servizio</h2>
-              <p className="text-gray-600">Seleziona il tipo di intervento di cui hai bisogno</p>
-            </div>
-            <div className="space-y-6">
-              {services.map(service => (
-                <ServiceCard 
-                  key={service.id} 
-                  service={service} 
-                  onSelect={async (service) => {
-                    setSelectedService(service);
-                    await simulateLoading(800);
-                    setCurrentScreen('technicians');
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'technicians':
-        return (
-          <div className="space-y-6 pb-20">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Scegli il Tecnico</h2>
-              <p className="text-gray-600">Professionisti verificati nella tua zona</p>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-4 shadow-lg">
-              <div className="flex items-center space-x-3">
-                <Search className="w-5 h-5 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Cerca per nome o specializzazione..." 
-                  className="flex-1 p-2 border-none outline-none"
-                />
-                <button className="bg-blue-100 text-blue-600 p-2 rounded-xl">
-                  <Filter className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="space-y-6">
-              {technicians.map(technician => (
-                <TechnicianCard 
-                  key={technician.id} 
-                  technician={technician} 
-                  onSelect={async (tech) => {
-                    setSelectedTechnician(tech);
-                    await simulateLoading(800);
-                    setCurrentScreen('booking');
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'booking':
-        return <BookingFlow />;
-
-      case 'tracking':
-        return <TrackingScreen />;
-
-      case 'profile':
-        return <ProfileScreen />;
-      
-      case 'chat':
-        return <ChatScreen />;
-      
-      case 'history':
-        return <HistoryScreen />;
-      
-      case 'notifications':
-        return <NotificationsScreen />;
-      
-      case 'emergency':
-        return <EmergencyScreen />;
-
-      case 'search':
-        return (
-          <div className="space-y-6 pb-20">
-            <div className="bg-white rounded-2xl p-4 shadow-lg">
-              <div className="flex items-center space-x-3">
-                <Search className="w-5 h-5 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Cerca servizi, tecnici, localita..." 
-                  className="flex-1 p-2 border-none outline-none"
-                />
-                <Filter className="w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-            <div className="text-center text-gray-500 mt-16">
-              <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p>Inizia a cercare per trovare</p>
-              <p className="text-sm">servizi e tecnici nella tua zona</p>
-            </div>
-          </div>
-        );
-
-      default:
-        return (
-          <div className="space-y-6 pb-20">
-            <div className="bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
-              <div className="relative">
-                <h2 className="text-2xl font-bold mb-2">Ciao {userProfile.name.split(' ')[0]}!</h2>
-                <p className="text-blue-100 mb-6">Il tuo condizionatore ha bisogno di manutenzione?</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setCurrentScreen('services')}
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 text-white py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Manutenzione
-                  </button>
-                  <button 
-                    onClick={() => setCurrentScreen('services')}
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 text-white py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Pulizia Express
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">2.5k+</div>
-                <div className="text-xs text-gray-600">Clienti Felici</div>
-              </div>
-              <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                <div className="text-2xl font-bold text-green-600 mb-1">4.9</div>
-                <div className="text-xs text-gray-600">Rating Medio</div>
-              </div>
-              <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
-                <div className="text-2xl font-bold text-purple-600 mb-1">&lt; 30min</div>
-                <div className="text-xs text-gray-600">Risposta</div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 shadow-xl">
-              <h3 className="text-xl font-bold mb-4 flex items-center">
-                <Zap className="w-6 h-6 mr-2 text-yellow-500" />
-                Servizi Piu Richiesti
-              </h3>
-              <div className="space-y-3">
-                {services.slice(0, 3).map((service, index) => (
-                  <div 
-                    key={index} 
-                    onClick={() => {
-                      setSelectedService(service);
-                      setCurrentScreen('technicians');
-                    }}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center">
-                      <div className="text-blue-600 mr-3">{service.icon}</div>
-                      <div>
-                        <div className="font-semibold text-gray-800">{service.name}</div>
-                        <div className="text-sm text-gray-600">{service.duration}</div>
-                      </div>
+          const Header = ({ title, showBack = false, onBack }) => (
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center flex-1">
+                    {showBack && (
+                      <button 
+                        onClick={onBack}
+                        className="mr-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <h1 className="text-2xl font-bold">{title || 'AirTech'}</h1>
+                      {!showBack && <p className="text-blue-100">Il tuo tecnico a domicilio</p>}
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-blue-600">€{service.price}</div>
-                      {service.badge && (
-                        <div className={`text-xs px-2 py-1 rounded-full ${
-                          service.badge === 'POPOLARE' ? 'bg-green-100 text-green-800' :
-                          service.badge === 'RACCOMANDATO' ? 'bg-blue-100 text-blue-800' :
-                          service.badge === 'NUOVO' ? 'bg-purple-100 text-purple-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {service.badge}
-                        </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button 
+                      onClick={() => setCurrentScreen('notifications')}
+                      className="relative p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {notifications.some(n => !n.read) && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
                       )}
-                    </div>
+                    </button>
+                    <button 
+                      onClick={() => setCurrentScreen('profile')}
+                      className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                    >
+                      <User className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                {!showBack && (
+                  <div className="flex items-center text-blue-100">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="text-sm">Via Roma 123, Milano</span>
+                    <button className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full hover:bg-white/30 transition-colors">
+                      Cambia
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+
+          const BottomNavigation = () => (
+            <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
+              <div className="flex justify-around items-center">
+                {[
+                  { id: 'home', icon: Home, label: 'Home' },
+                  { id: 'search', icon: Search, label: 'Cerca' },
+                  { id: 'history', icon: History, label: 'Storico' },
+                  { id: 'chat', icon: MessageCircle, label: 'Chat' },
+                  { id: 'profile', icon: User, label: 'Profilo' }
+                ].map(({ id, icon: Icon, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      setActiveTab(id);
+                      setCurrentScreen(id);
+                    }}
+                    className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all ${
+                      activeTab === id 
+                        ? 'text-blue-600 bg-blue-50' 
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-xs font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+
+          const ServiceCard = ({ service, onSelect }) => (
+            <div 
+              onClick={() => onSelect(service)}
+              className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1 relative overflow-hidden"
+            >
+              {service.badge && (
+                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${
+                  service.badge === 'POPOLARE' ? 'bg-green-100 text-green-800' :
+                  service.badge === 'RACCOMANDATO' ? 'bg-blue-100 text-blue-800' :
+                  service.badge === 'NUOVO' ? 'bg-purple-100 text-purple-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {service.badge}
+                </div>
+              )}
+              
+              <div className="flex items-start justify-between mb-6">
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-2xl text-blue-600">
+                  {service.icon}
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-2">
+                    {service.originalPrice && (
+                      <span className="text-lg text-gray-400 line-through">€{service.originalPrice}</span>
+                    )}
+                    <span className="text-3xl font-bold text-gray-800">€{service.price}</span>
+                  </div>
+                  <div className="text-sm text-gray-500">{service.duration}</div>
+                </div>
+              </div>
+              
+              <h3 className="text-xl font-bold text-gray-800 mb-3">{service.name}</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">{service.description}</p>
+              
+              <div className="space-y-2 mb-4">
+                {service.benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span>{benefit}</span>
                   </div>
                 ))}
-                <button 
-                  onClick={() => setCurrentScreen('services')}
-                  className="w-full text-blue-600 font-semibold py-3 hover:bg-blue-50 rounded-2xl transition-colors"
-                >
-                  Vedi Tutti i Servizi →
+              </div>
+              
+              <div className="bg-green-50 p-3 rounded-xl">
+                <div className="flex items-center text-green-700">
+                  <Zap className="w-4 h-4 mr-2" />
+                  <span className="text-sm font-medium">{service.savings}</span>
+                </div>
+              </div>
+            </div>
+          );
+
+          const TechnicianCard = ({ technician, onSelect }) => (
+            <div 
+              onClick={() => onSelect(technician)}
+              className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center flex-1">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                      {technician.photo}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="text-lg font-bold text-gray-800">{technician.name}</h3>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(technician.id);
+                        }}
+                        className="p-1"
+                      >
+                        <Heart 
+                          className={`w-4 h-4 ${
+                            favorites.includes(technician.id) 
+                              ? 'text-red-500 fill-current' 
+                              : 'text-gray-400'
+                          }`} 
+                        />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{technician.specialization}</p>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+                        <span className="text-sm font-semibold">{technician.rating}</span>
+                        <span className="text-sm text-gray-500 ml-1">({technician.reviews})</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {technician.completedJobs} lavori
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {technician.badges.map((badge, index) => (
+                        <span 
+                          key={index}
+                          className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            badge.includes('TOP') ? 'bg-yellow-100 text-yellow-800' :
+                            badge.includes('EMERGENCY') ? 'bg-red-100 text-red-800' :
+                            badge.includes('SUPER') ? 'bg-purple-100 text-purple-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="flex items-center text-gray-600">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {technician.distance}
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <Award className="w-4 h-4 mr-1" />
+                  {technician.experience}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between bg-green-50 p-3 rounded-xl">
+                <div className="flex items-center text-green-700">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="font-medium">{technician.nextAvailable}</span>
+                </div>
+                <button className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700 transition-colors">
+                  Prenota
                 </button>
               </div>
             </div>
+          );
 
-            {bookingHistory.length > 0 && (
+          // Schermate principali
+          const ProfileScreen = () => (
+            <div className="space-y-6 pb-20">
               <div className="bg-white rounded-3xl p-6 shadow-xl">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <History className="w-5 h-5 mr-2 text-blue-600" />
-                  Ultimo Servizio
-                </h3>
-                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-2xl">
-                  <div className="flex items-center">
-                    <div className="bg-green-500 p-3 rounded-2xl mr-4">
-                      <CheckCircle className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{bookingHistory[0].service}</p>
-                      <p className="text-sm text-gray-600">{bookingHistory[0].date} - {bookingHistory[0].technician}</p>
-                      <div className="flex items-center mt-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`w-3 h-3 ${i < bookingHistory[0].rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                        ))}
-                        <span className="text-xs text-gray-600 ml-1">({bookingHistory[0].rating}/5)</span>
-                      </div>
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                    {userProfile.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-gray-800">{userProfile.name}</h2>
+                    <p className="text-gray-600">{userProfile.email}</p>
+                    <div className="flex items-center mt-2">
+                      <Award className="w-4 h-4 text-yellow-500 mr-1" />
+                      <span className="text-sm font-medium text-gray-700">Membro {userProfile.level}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => {
-                      const service = services.find(s => s.name === bookingHistory[0].service);
-                      if (service) {
-                        setSelectedService(service);
-                        setCurrentScreen('technicians');
-                      }
-                    }}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-4 bg-blue-50 rounded-2xl">
+                    <div className="text-2xl font-bold text-blue-600">{userProfile.totalServices}</div>
+                    <div className="text-sm text-gray-600">Servizi</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-2xl">
+                    <div className="text-2xl font-bold text-green-600">{userProfile.points}</div>
+                    <div className="text-sm text-gray-600">Punti</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-2xl">
+                    <div className="text-2xl font-bold text-purple-600">{userProfile.memberSince}</div>
+                    <div className="text-sm text-gray-600">Dal</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <Phone className="w-5 h-5 text-gray-400 mr-3" />
+                      <span>{userProfile.phone}</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <MapPin className="w-5 h-5 text-gray-400 mr-3" />
+                      <span>{userProfile.address}</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+
+          const ChatScreen = () => (
+            <div className="flex flex-col h-screen bg-gray-50">
+              <div className="bg-white border-b border-gray-200 p-4">
+                <h2 className="text-lg font-semibold">Chat con {selectedTechnician?.name || 'Supporto'}</h2>
+              </div>
+              
+              <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                {chatMessages.length === 0 ? (
+                  <div className="text-center text-gray-500 mt-8">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>Nessun messaggio ancora</p>
+                    <p className="text-sm">Inizia una conversazione!</p>
+                  </div>
+                ) : (
+                  chatMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs p-3 rounded-2xl ${
+                          message.sender === 'user'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-800 shadow-lg'
+                        }`}
+                      >
+                        <p>{message.text}</p>
+                        <p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+                          {message.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="bg-white border-t border-gray-200 p-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Scrivi un messaggio..."
+                    className="flex-1 p-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className={`p-3 rounded-full ${
+                      newMessage.trim()
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-200 text-gray-400'
+                    } transition-colors`}
                   >
-                    Ripeti
+                    <Send className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-            )}
+            </div>
+          );
 
-            <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-3xl p-6 text-white shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold">AirTech Premium</h3>
-                  <p className="text-yellow-100 text-sm">Livello {userProfile.level} - Raccogli punti ad ogni servizio</p>
+          // Render principale
+          const renderMainContent = () => {
+            switch(currentScreen) {
+              case 'services':
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Scegli il Servizio</h2>
+                      <p className="text-gray-600">Seleziona il tipo di intervento di cui hai bisogno</p>
+                    </div>
+                    <div className="space-y-6">
+                      {services.map(service => (
+                        <ServiceCard 
+                          key={service.id} 
+                          service={service} 
+                          onSelect={async (service) => {
+                            setSelectedService(service);
+                            await simulateLoading(800);
+                            setCurrentScreen('technicians');
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+
+              case 'technicians':
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Scegli il Tecnico</h2>
+                      <p className="text-gray-600">Professionisti verificati nella tua zona</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-2xl p-4 shadow-lg">
+                      <div className="flex items-center space-x-3">
+                        <Search className="w-5 h-5 text-gray-400" />
+                        <input 
+                          type="text" 
+                          placeholder="Cerca per nome o specializzazione..." 
+                          className="flex-1 p-2 border-none outline-none"
+                        />
+                        <button className="bg-blue-100 text-blue-600 p-2 rounded-xl">
+                          <Filter className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      {technicians.map(technician => (
+                        <TechnicianCard 
+                          key={technician.id} 
+                          technician={technician} 
+                          onSelect={(tech) => {
+                            setSelectedTechnician(tech);
+                            showSuccess(`Tecnico ${tech.name} selezionato! Implementazione prenotazione in corso...`);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+
+              case 'profile':
+                return <ProfileScreen />;
+              
+              case 'chat':
+                return <ChatScreen />;
+              
+              case 'history':
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="bg-white rounded-3xl p-6 shadow-xl">
+                      <h2 className="text-xl font-bold mb-4">Storico Servizi</h2>
+                      <div className="space-y-4">
+                        {bookingHistory.map((booking) => (
+                          <div key={booking.id} className="border border-gray-200 rounded-2xl p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-800">{booking.service}</h3>
+                                <p className="text-sm text-gray-600">{booking.technician}</p>
+                                <p className="text-sm text-gray-500">{booking.date}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-blue-600">€{booking.price}</div>
+                                <div className="text-sm text-green-600 font-medium">{booking.status}</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${
+                                      i < booking.rating 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                                <span className="text-sm text-gray-600 ml-2">({booking.rating}/5)</span>
+                              </div>
+                              <button className="bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
+                                Ripeti
+                              </button>
+                            </div>
+                            
+                            {booking.review && (
+                              <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                                <p className="text-sm text-gray-700">"{booking.review}"</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+              case 'search':
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="bg-white rounded-2xl p-4 shadow-lg">
+                      <div className="flex items-center space-x-3">
+                        <Search className="w-5 h-5 text-gray-400" />
+                        <input 
+                          type="text" 
+                          placeholder="Cerca servizi, tecnici, localita..." 
+                          className="flex-1 p-2 border-none outline-none"
+                        />
+                        <Filter className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="text-center text-gray-500 mt-16">
+                      <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <p>Inizia a cercare per trovare</p>
+                      <p className="text-sm">servizi e tecnici nella tua zona</p>
+                    </div>
+                  </div>
+                );
+
+              case 'notifications':
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="bg-white rounded-3xl p-6 shadow-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold">Notifiche</h2>
+                        <button 
+                          onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                          className="text-blue-600 text-sm font-medium"
+                        >
+                          Segna tutte come lette
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 rounded-2xl border ${
+                              notification.read 
+                                ? 'bg-gray-50 border-gray-200' 
+                                : 'bg-blue-50 border-blue-200'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-800">{notification.title}</h3>
+                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                              </div>
+                              {!notification.read && (
+                                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+              default:
+                return (
+                  <div className="space-y-6 pb-20">
+                    <div className="bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl">
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+                      <div className="relative">
+                        <h2 className="text-2xl font-bold mb-2">Ciao {userProfile.name.split(' ')[0]}! 👋</h2>
+                        <p className="text-blue-100 mb-6">Il tuo condizionatore ha bisogno di manutenzione?</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            onClick={() => setCurrentScreen('services')}
+                            className="bg-white/20 backdrop-blur-sm border border-white/30 text-white py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
+                          >
+                            🔧 Manutenzione
+                          </button>
+                          <button 
+                            onClick={() => setCurrentScreen('services')}
+                            className="bg-white/20 backdrop-blur-sm border border-white/30 text-white py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
+                          >
+                            🧽 Pulizia Express
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">2.5k+</div>
+                        <div className="text-xs text-gray-600">Clienti Felici</div>
+                      </div>
+                      <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                        <div className="text-2xl font-bold text-green-600 mb-1">4.9⭐</div>
+                        <div className="text-xs text-gray-600">Rating Medio</div>
+                      </div>
+                      <div className="bg-white rounded-2xl p-4 shadow-lg text-center">
+                        <div className="text-2xl font-bold text-purple-600 mb-1">&lt; 30min</div>
+                        <div className="text-xs text-gray-600">Risposta</div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 shadow-xl">
+                      <h3 className="text-xl font-bold mb-4 flex items-center">
+                        <Zap className="w-6 h-6 mr-2 text-yellow-500" />
+                        Servizi Più Richiesti
+                      </h3>
+                      <div className="space-y-3">
+                        {services.slice(0, 3).map((service, index) => (
+                          <div 
+                            key={index} 
+                            onClick={() => {
+                              setSelectedService(service);
+                              setCurrentScreen('technicians');
+                            }}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center">
+                              <div className="text-blue-600 mr-3">{service.icon}</div>
+                              <div>
+                                <div className="font-semibold text-gray-800">{service.name}</div>
+                                <div className="text-sm text-gray-600">{service.duration}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-600">€{service.price}</div>
+                              {service.badge && (
+                                <div className={`text-xs px-2 py-1 rounded-full ${
+                                  service.badge === 'POPOLARE' ? 'bg-green-100 text-green-800' :
+                                  service.badge === 'RACCOMANDATO' ? 'bg-blue-100 text-blue-800' :
+                                  service.badge === 'NUOVO' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  {service.badge}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <button 
+                          onClick={() => setCurrentScreen('services')}
+                          className="w-full text-blue-600 font-semibold py-3 hover:bg-blue-50 rounded-2xl transition-colors"
+                        >
+                          Vedi Tutti i Servizi →
+                        </button>
+                      </div>
+                    </div>
+
+                    {bookingHistory.length > 0 && (
+                      <div className="bg-white rounded-3xl p-6 shadow-xl">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center">
+                          <History className="w-5 h-5 mr-2 text-blue-600" />
+                          Ultimo Servizio
+                        </h3>
+                        <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-2xl">
+                          <div className="flex items-center">
+                            <div className="bg-green-500 p-3 rounded-2xl mr-4">
+                              <CheckCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800">{bookingHistory[0].service}</p>
+                              <p className="text-sm text-gray-600">{bookingHistory[0].date} - {bookingHistory[0].technician}</p>
+                              <div className="flex items-center mt-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`w-3 h-3 ${i < bookingHistory[0].rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                                ))}
+                                <span className="text-xs text-gray-600 ml-1">({bookingHistory[0].rating}/5)</span>
+                              </div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const service = services.find(s => s.name === bookingHistory[0].service);
+                              if (service) {
+                                setSelectedService(service);
+                                setCurrentScreen('technicians');
+                              }
+                            }}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            Ripeti
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-3xl p-6 text-white shadow-2xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold">AirTech Premium</h3>
+                          <p className="text-yellow-100 text-sm">Livello {userProfile.level} - Raccogli punti ad ogni servizio</p>
+                        </div>
+                        <Gift className="w-8 h-8 text-yellow-200" />
+                      </div>
+                      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm">Punti Attuali</span>
+                          <span className="font-bold">{userProfile.points} pts</span>
+                        </div>
+                        <div className="w-full bg-white/30 rounded-full h-2">
+                          <div className="bg-white h-2 rounded-full w-3/4"></div>
+                        </div>
+                        <p className="text-xs text-yellow-100 mt-2">
+                          Altri {1500 - userProfile.points} punti per un servizio gratuito! 🎉
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+            }
+          };
+
+          const getBackHandler = () => {
+            switch (currentScreen) {
+              case 'services':
+              case 'search':
+              case 'history':
+              case 'chat':
+              case 'profile':
+              case 'notifications':
+                return () => {
+                  setCurrentScreen('home');
+                  setActiveTab('home');
+                };
+              case 'technicians':
+                return () => setCurrentScreen('services');
+              default:
+                return null;
+            }
+          };
+
+          const getScreenTitle = () => {
+            switch (currentScreen) {
+              case 'services': return 'Scegli Servizio';
+              case 'technicians': return 'Scegli Tecnico';
+              case 'profile': return 'Il Mio Profilo';
+              case 'chat': return 'Chat';
+              case 'history': return 'Storico Servizi';
+              case 'search': return 'Cerca';
+              case 'notifications': return 'Notifiche';
+              default: return 'AirTech';
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 relative">
+              <StatusBar />
+              
+              {/* Notification */}
+              {showNotification && (
+                <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl animate-bounce">
+                  <CheckCircle className="w-5 h-5 inline mr-2" />
+                  {showNotification}
                 </div>
-                <Gift className="w-8 h-8 text-yellow-200" />
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm">Punti Attuali</span>
-                  <span className="font-bold">{userProfile.points} pts</span>
+              )}
+              
+              {/* Loading */}
+              {isLoading && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center">
+                  <div className="bg-white rounded-3xl p-8 text-center shadow-2xl">
+                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 font-medium">Elaborazione in corso...</p>
+                  </div>
                 </div>
-                <div className="w-full bg-white/30 rounded-full h-2">
-                  <div className="bg-white h-2 rounded-full w-3/4"></div>
+              )}
+              
+              {/* Main App */}
+              <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
+                <Header 
+                  title={getScreenTitle()}
+                  showBack={!['home', 'search', 'history', 'chat', 'profile'].includes(currentScreen)}
+                  onBack={getBackHandler()}
+                />
+                
+                <div className="p-6">
+                  {renderMainContent()}
                 </div>
-                <p className="text-xs text-yellow-100 mt-2">
-                  Altri {1500 - userProfile.points} punti per un servizio gratuito!
-                </p>
+                
+                {/* Bottom Navigation */}
+                {['home', 'search', 'history', 'chat', 'profile'].includes(currentScreen) && (
+                  <BottomNavigation />
+                )}
+                
+                {/* Emergency Button */}
+                <button 
+                  onClick={() => showSuccess('Funzione emergenza attivata! 🚨')}
+                  className="fixed bottom-24 right-6 w-16 h-16 bg-red-500 rounded-full shadow-2xl flex items-center justify-center text-white hover:bg-red-600 transition-all duration-300 transform hover:scale-110 z-30"
+                >
+                  <AlertCircle className="w-8 h-8" />
+                </button>
               </div>
             </div>
-          </div>
-        );
-    }
-  };
-
-  const getBackHandler = () => {
-    switch (currentScreen) {
-      case 'services':
-      case 'search':
-      case 'history':
-      case 'chat':
-      case 'profile':
-      case 'notifications':
-      case 'emergency':
-        return () => {
-          setCurrentScreen('home');
-          setActiveTab('home');
+          );
         };
-      case 'technicians':
-        return () => setCurrentScreen('services');
-      case 'booking':
-        return () => setCurrentScreen('technicians');
-      case 'tracking':
-        return () => setCurrentScreen('home');
-      default:
-        return null;
-    }
-  };
 
-  const getScreenTitle = () => {
-    switch (currentScreen) {
-      case 'services': return 'Scegli Servizio';
-      case 'technicians': return 'Scegli Tecnico';
-      case 'booking': return 'Prenota Appuntamento';
-      case 'tracking': return 'Tracking Servizio';
-      case 'profile': return 'Il Mio Profilo';
-      case 'chat': return 'Chat';
-      case 'history': return 'Storico Servizi';
-      case 'search': return 'Cerca';
-      case 'notifications': return 'Notifiche';
-      case 'emergency': return 'Emergenza';
-      default: return 'AirTech';
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 relative">
-      <StatusBar />
-      
-      {showNotification && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl animate-bounce">
-          <CheckCircle className="w-5 h-5 inline mr-2" />
-          {showNotification}
-        </div>
-      )}
-      
-      {isLoading && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 text-center shadow-2xl">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Elaborazione in corso...</p>
-          </div>
-        </div>
-      )}
-      
-      <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
-        <Header 
-          title={getScreenTitle()}
-          showBack={!['home', 'search', 'history', 'chat', 'profile'].includes(currentScreen)}
-          onBack={getBackHandler()}
-          actions={[
-            currentScreen === 'home' && { icon: Download, onClick: () => showSuccess('Funzione download in arrivo!') }
-          ].filter(Boolean)}
-        />
-        
-        <div className="p-6">
-          {renderScreen()}
-        </div>
-        
-        {['home', 'search', 'history', 'chat', 'profile'].includes(currentScreen) && (
-          <BottomNavigation />
-        )}
-        
-        <EmergencyButton />
-      </div>
-    </div>
-  );
-};
-
-export default AirTechApp;
-        
+        // Render dell'app
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(AirTechApp));
     </script>
 
-    <!-- Service Worker -->
+    <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => console.log('SW registered'))
-                    .catch(registrationError => console.log('SW registration failed'));
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
             });
         }
     </script>
